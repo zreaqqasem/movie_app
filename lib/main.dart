@@ -7,72 +7,62 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+        useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: const AlignmentPractice(),
     );
   }
 }
 
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
+
+class AlignmentPractice extends StatefulWidget {
+  const AlignmentPractice({super.key});
+
+  @override
+  State<AlignmentPractice> createState() => _AlignmentPracticeState();
+}
+
+class _AlignmentPracticeState extends State<AlignmentPractice> {
+
+  List<String> images =  [
+    'https://img.freepik.com/free-photo/courage-man-jump-through-gap-hill-business-concept-idea_1323-262.jpg?semt=ais_hybrid&w=740&q=80',
+    'https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE='
+  ];
+  int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Splash Screen'), centerTitle: true),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Alignment Practice'),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      ),
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 5,
           children: [
-            Text('Ahmad', style: TextStyle(fontSize: 30, color: Colors.red)),
-            Text('Ali'),
-            Container(
-              width: 400,
-              height: 300,
-              decoration: BoxDecoration(
-                color: Colors.amberAccent,
-                borderRadius: BorderRadius.all(Radius.circular(10)),
+            Image.network(images[currentIndex]),
+            SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  if (currentIndex == 0){
+                    currentIndex = 1;
+                  }else{
+                    currentIndex = 0;
+                  }
+               });
+              },
+              child: Text(
+                'Change Image',
+                style: TextStyle(color: Colors.red, fontSize: 25),
               ),
-              child: Center(child: Text("This is inner container")),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                ),
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                ),
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
