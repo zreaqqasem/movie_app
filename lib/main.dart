@@ -20,7 +20,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class AlignmentPractice extends StatefulWidget {
   const AlignmentPractice({super.key});
 
@@ -29,10 +28,9 @@ class AlignmentPractice extends StatefulWidget {
 }
 
 class _AlignmentPracticeState extends State<AlignmentPractice> {
-
-  List<String> images =  [
+  List<String> images = [
     'https://img.freepik.com/free-photo/courage-man-jump-through-gap-hill-business-concept-idea_1323-262.jpg?semt=ais_hybrid&w=740&q=80',
-    'https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE='
+    'https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE=',
   ];
   int currentIndex = 0;
 
@@ -45,26 +43,41 @@ class _AlignmentPracticeState extends State<AlignmentPractice> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       body: Center(
-        child: Column(
-          children: [
-            Image.network(images[currentIndex]),
-            SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  if (currentIndex == 0){
-                    currentIndex = 1;
-                  }else{
-                    currentIndex = 0;
-                  }
-               });
-              },
-              child: Text(
-                'Change Image',
-                style: TextStyle(color: Colors.red, fontSize: 25),
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Image.network(
+                'https://img.freepik.com/premium-vector/avatar-profile-icon-flat-style-female-user-profile-vector-illustration-isolated-background-women-profile-sign-business-concept_157943-38866.jpg?semt=ais_hybrid&w=740&q=80',
+              ).image,
             ),
-          ],
+            color: Colors.blue,
+            borderRadius: BorderRadius.all(Radius.circular(65)),
+          ),
+          height: 130,
+          width: 130,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                bottom: -9,
+                right: 10,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(65)),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      print('change image');
+                    },
+                    icon: Icon(Icons.camera_alt_outlined),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
