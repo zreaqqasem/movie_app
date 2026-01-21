@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -37,47 +39,39 @@ class _AlignmentPracticeState extends State<AlignmentPractice> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Alignment Practice'),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
-      body: Center(
-        child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: Image.network(
-                'https://img.freepik.com/premium-vector/avatar-profile-icon-flat-style-female-user-profile-vector-illustration-isolated-background-women-profile-sign-business-concept_157943-38866.jpg?semt=ais_hybrid&w=740&q=80',
-              ).image,
+      body: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(fit: BoxFit.fill, 'assets/images/example.png'),
             ),
-            color: Colors.blue,
-            borderRadius: BorderRadius.all(Radius.circular(65)),
-          ),
-          height: 130,
-          width: 130,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(
-                bottom: -9,
-                right: 10,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.all(Radius.circular(65)),
-                  ),
-                  child: IconButton(
-                    onPressed: () {
-                      print('change image');
-                    },
-                    icon: Icon(Icons.camera_alt_outlined),
-                  ),
-                ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(color: Colors.white.withOpacity(0.1)),
               ),
-            ],
-          ),
+            ),
+
+            Positioned(
+              left: 22,
+              top: 40,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                  ),
+                  SizedBox(width: 57.7),
+                  Text(
+                    'October 19',
+                    style: TextStyle(fontSize: 20, color: Colors.white,),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
