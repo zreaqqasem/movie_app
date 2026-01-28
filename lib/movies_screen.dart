@@ -43,35 +43,11 @@ class _MoviesScreenState extends State<MoviesScreen> {
             body: SizedBox(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
-              child: Stack(
+              child: Column(
                 children: [
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(color: Colors.grey.withOpacity(0.1)),
-                    ),
-                  ),
-                  Positioned(
-                    left: 22,
-                    top: 40,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.arrow_back, color: Colors.white),
-                        ),
-                        SizedBox(width: 57.7),
-                        Text(
-                          'October 19',
-                          style: TextStyle(fontSize: 20, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 100,
-                    left: 10,
-                    right: 0,
+                  SizedBox(height: 200),
+                  Padding(
+                    padding: EdgeInsetsGeometry.only(left: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -86,11 +62,14 @@ class _MoviesScreenState extends State<MoviesScreen> {
                               return Padding(
                                 padding: EdgeInsetsGeometry.only(right: 5),
                                 child: HomeMovieCard(
-                                  imageUrl:MovieService.imageBaseUrl+'${movies[index].posterPath}',
+                                  imageUrl:
+                                      '${MovieService.imageBaseUrl}${movies[index].posterPath}',
                                   movieName: movies[index].title,
                                   year: movies[index].releaseDate.year
                                       .toString(),
-                                  rating: movies[index].voteAverage.floor().toString(),
+                                  rating: movies[index].voteAverage
+                                      .floor()
+                                      .toString(),
                                 ),
                               );
                             },
@@ -100,24 +79,58 @@ class _MoviesScreenState extends State<MoviesScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 400,
-                    left: 10,
-                    right: 0,
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: EdgeInsetsGeometry.only(left: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Up Coming', style: TextStyle(fontSize: 20)),
+                        Text('Popular', style: TextStyle(fontSize: 20)),
                         SizedBox(height: 6),
                         SizedBox(
-                          height: 230,
+                          height: 500,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
+                            itemCount: (movies.length / 2).ceil(),
+                            // Half the count (rounded up)
                             itemBuilder: (context, index) {
-                              log(movies[index].posterPath);
-                             // todo return popular style;
+                              final firstIndex = index * 2;
+                              final secondIndex = index * 2 + 1;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                // Fixed: EdgeInsets not EdgeInsetsGeometry
+                                child: Column(
+                                  children: [
+                                    HomeMovieCard(
+                                      imageUrl:
+                                          '${MovieService.imageBaseUrl}${movies[firstIndex].posterPath}',
+                                      movieName: movies[firstIndex].title,
+                                      year: movies[firstIndex].releaseDate.year
+                                          .toString(),
+                                      rating: movies[firstIndex].voteAverage
+                                          .floor()
+                                          .toString(),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    // Only show second card if it exists (handles odd number of movies)
+                                    if (secondIndex < movies.length)
+                                      HomeMovieCard(
+                                        imageUrl:
+                                            '${MovieService.imageBaseUrl}${movies[secondIndex].posterPath}',
+                                        movieName: movies[secondIndex].title,
+                                        year: movies[secondIndex]
+                                            .releaseDate
+                                            .year
+                                            .toString(),
+                                        rating: movies[secondIndex].voteAverage
+                                            .floor()
+                                            .toString(),
+                                      ),
+                                  ],
+                                ),
+                              );
                             },
-                            itemCount: movies.length,
                           ),
                         ),
                       ],

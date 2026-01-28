@@ -18,6 +18,7 @@ class HomeMovieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 135,
+      height: 200,
       child: Stack(
         children: [
           Positioned.fill(
