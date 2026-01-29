@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:movie_app/features/movies_feature/presentation/ui/screens/movies_screen.dart';
 
+import 'main_screen_wrapper.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -16,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
       ),
-      home: const MoviesScreen(),
+      home: const MainWrapperScreen(),
     );
   }
 }
