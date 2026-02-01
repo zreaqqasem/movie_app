@@ -1,10 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:movie_app/features/movies_feature/presentation/ui/screens/movies_screen.dart';
 import 'package:movie_app/features/people_feature/presentation/ui/screens/people_screen.dart';
-import 'features/movies_feature/data/models/movie_model.dart';
 
 class MainWrapperScreen extends StatefulWidget {
   const MainWrapperScreen({super.key});

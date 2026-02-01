@@ -1,232 +1,243 @@
-import 'dart:developer';
-import 'dart:ui';
+// Movies Screen - Single Responsibility Principle (SRP)
+// Only responsible for UI rendering and user interaction
 import 'package:flutter/material.dart';
-import 'package:movie_app/features/movies_feature/data/models/movie_response.dart';
-import 'package:movie_app/features/movies_feature/data/movie_service.dart';
-import 'package:movie_app/features/movies_feature/presentation/ui/screens/movie_details_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:movie_app/core/config/api_config.dart';
+import 'package:movie_app/core/di/injection_container.dart';
+import 'package:movie_app/features/movies_feature/presentation/cubit/movies_cubit.dart';
+import 'package:movie_app/features/movies_feature/presentation/cubit/movies_state.dart';
 import 'package:movie_app/features/movies_feature/presentation/ui/widgets/discover_movie_card.dart';
 import 'package:movie_app/features/movies_feature/presentation/ui/widgets/home_screen_movie_card.dart';
+import 'package:movie_app/features/movies_feature/presentation/ui/screens/movie_details_screen.dart';
 
-import '../../../data/models/movie_model.dart';
-
-class MoviesScreen extends StatefulWidget {
+class MoviesScreen extends StatelessWidget {
   const MoviesScreen({super.key});
 
   @override
-  State<MoviesScreen> createState() => _MoviesScreenState();
-}
-
-class _MoviesScreenState extends State<MoviesScreen> {
-  List<Result> upComingMovies = [];
-  List<Result> popularMovies = [];
-  List<Result> discoverMovies = [];
-
-  final _movieService = MovieService();
-  bool isLoading = false;
-  _getMovies() async {
-    setState(() {
-      isLoading = true;
-    });
-    upComingMovies = await _movieService.getTopRatedMovies(1) ?? [];
-    popularMovies = await _movieService.getPopularMovies(1) ?? [];
-    discoverMovies = await _movieService.getDiscoverMovies(1) ?? [];
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  @override
-  void initState() {
-    _getMovies();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return isLoading
-        ? Center(child: CircularProgressIndicator())
-        : Scaffold(
-            body: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(height: 40),
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: EdgeInsetsGeometry.only(right: 5),
-                              child: GestureDetector(
+    return BlocProvider(
+      create: (context) => sl<MoviesCubit>()..loadMovies(),
+      child: Scaffold(
+        body: BlocBuilder<MoviesCubit, MoviesState>(
+          builder: (context, state) {
+            if (state is MoviesLoadingState) {
+              return const Center(
+                child: CircularProgressIndicator.adaptive(),
+              );
+            } else if (state is MoviesLoadedState) {
+              return _buildMoviesContent(context, state);
+            } else if (state is MoviesErrorState) {
+              return _buildErrorWidget(context, state.message);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoviesContent(BuildContext context, MoviesLoadedState state) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+
+            // Discover Movies Section
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: SizedBox(
+                height: 180,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: state.discover.length,
+                  itemBuilder: (context, index) {
+                    final movie = state.discover[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 5),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MovieDetailsScreen(
+                                movieId: movie.id,
+                              ),
+                            ),
+                          );
+                        },
+                        child: DiscoverMovieCard(
+                          imageUrl: movie.posterPath != null
+                              ? '${ApiConfig.imageBaseUrl}${movie.posterPath}'
+                              : '',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // Top Rated Movies Section
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Top Rated', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: state.topRated.length,
+                      itemBuilder: (context, index) {
+                        final movie = state.topRated[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MovieDetailsScreen(
+                                    movieId: movie.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: HomeMovieCard(
+                              imageUrl: movie.posterPath != null
+                                  ? '${ApiConfig.imageBaseUrl}${movie.posterPath}'
+                                  : '',
+                              movieName: movie.title,
+                              year: movie.releaseDate?.year.toString() ?? 'N/A',
+                              rating: movie.voteAverage.floor().toString(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Popular Movies Section
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Popular', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 410,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: (state.popular.length / 2).ceil(),
+                      itemBuilder: (context, index) {
+                        final firstIndex = index * 2;
+                        final secondIndex = index * 2 + 1;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Column(
+                            children: [
+                              GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => MovieDetailsScreen(
-                                        movieId: discoverMovies[index].id,
+                                        movieId: state.popular[firstIndex].id,
                                       ),
                                     ),
                                   );
                                 },
-                                child: DiscoverMovieCard(
-                                  imageUrl:
-                                      '${MovieService.imageBaseUrl}${discoverMovies[index].posterPath}',
+                                child: HomeMovieCard(
+                                  imageUrl: state.popular[firstIndex].posterPath != null
+                                      ? '${ApiConfig.imageBaseUrl}${state.popular[firstIndex].posterPath}'
+                                      : '',
+                                  movieName: state.popular[firstIndex].title,
+                                  year: state.popular[firstIndex].releaseDate?.year.toString() ?? 'N/A',
+                                  rating: state.popular[firstIndex].voteAverage.floor().toString(),
                                 ),
                               ),
-                            );
-                          },
-                          itemCount: discoverMovies.length,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Up Coming', style: TextStyle(fontSize: 20)),
-                          SizedBox(height: 6),
-                          SizedBox(
-                            height: 200,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (context, index) {
-                                log(upComingMovies[index].posterPath);
-                                return Padding(
-                                  padding: EdgeInsetsGeometry.only(right: 5),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              MovieDetailsScreen(
-                                                movieId: upComingMovies[index].id,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                    child: HomeMovieCard(
-                                      imageUrl:
-                                          '${MovieService.imageBaseUrl}${upComingMovies[index].posterPath}',
-                                      movieName: upComingMovies[index].title,
-                                      year: upComingMovies[index].releaseDate.year
-                                          .toString(),
-                                      rating: upComingMovies[index].voteAverage
-                                          .floor()
-                                          .toString(),
-                                    ),
-                                  ),
-                                );
-                              },
-                              itemCount: upComingMovies.length,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Padding(
-                      padding: EdgeInsetsGeometry.only(left: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Popular', style: TextStyle(fontSize: 20)),
-                          SizedBox(height: 6),
-                          SizedBox(
-                            height: 410,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: (popularMovies.length / 2).ceil(),
-                              // Half the count (rounded up)
-                              itemBuilder: (context, index) {
-                                final firstIndex = index * 2;
-                                final secondIndex = index * 2 + 1;
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 4),
-                                  // Fixed: EdgeInsets not EdgeInsetsGeometry
-                                  child: Column(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  MovieDetailsScreen(
-                                                    movieId:
-                                                        popularMovies[firstIndex]
-                                                            .id,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                        child: HomeMovieCard(
-                                          imageUrl:
-                                              '${MovieService.imageBaseUrl}${popularMovies[firstIndex].posterPath}',
-                                          movieName:
-                                              popularMovies[firstIndex].title,
-                                          year: popularMovies[firstIndex]
-                                              .releaseDate
-                                              .year
-                                              .toString(),
-                                          rating: popularMovies[firstIndex]
-                                              .voteAverage
-                                              .floor()
-                                              .toString(),
+                              const SizedBox(height: 5),
+                              if (secondIndex < state.popular.length)
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MovieDetailsScreen(
+                                          movieId: state.popular[secondIndex].id,
                                         ),
                                       ),
-                                      const SizedBox(height: 5),
-                                      // Only show second card if it exists (handles odd number of movies)
-                                      if (secondIndex < popularMovies.length)
-                                        GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    MovieDetailsScreen(
-                                                      movieId:
-                                                          popularMovies[secondIndex]
-                                                              .id,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          child: HomeMovieCard(
-                                            imageUrl:
-                                                '${MovieService.imageBaseUrl}${popularMovies[secondIndex].posterPath}',
-                                            movieName:
-                                                popularMovies[secondIndex].title,
-                                            year: popularMovies[secondIndex]
-                                                .releaseDate
-                                                .year
-                                                .toString(),
-                                            rating: popularMovies[secondIndex]
-                                                .voteAverage
-                                                .floor()
-                                                .toString(),
-                                          ),
-                                        ),
-                                    ],
+                                    );
+                                  },
+                                  child: HomeMovieCard(
+                                    imageUrl: state.popular[secondIndex].posterPath != null
+                                        ? '${ApiConfig.imageBaseUrl}${state.popular[secondIndex].posterPath}'
+                                        : '',
+                                    movieName: state.popular[secondIndex].title,
+                                    year: state.popular[secondIndex].releaseDate?.year.toString() ?? 'N/A',
+                                    rating: state.popular[secondIndex].voteAverage.floor().toString(),
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          );
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 60,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<MoviesCubit>().loadMovies();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
   }
 }

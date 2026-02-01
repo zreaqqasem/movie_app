@@ -1,115 +1,104 @@
+// People Screen - Single Responsibility Principle (SRP)
+// Only responsible for UI rendering and user interaction
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:movie_app/features/people_feature/date/models/popular_response_model.dart';
-import 'package:movie_app/features/people_feature/date/people_service.dart';
-import 'package:movie_app/features/people_feature/presentation/bloc/people_bloc.dart';
-import 'package:movie_app/features/people_feature/presentation/bloc/people_states.dart';
+import 'package:movie_app/core/config/api_config.dart';
+import 'package:movie_app/core/di/injection_container.dart';
+import 'package:movie_app/features/people_feature/presentation/cubit/people_cubit.dart';
+import 'package:movie_app/features/people_feature/presentation/cubit/people_state.dart';
 import 'package:movie_app/features/people_feature/presentation/ui/widgets/people_card.dart';
 
-class PeopleScreen extends StatefulWidget {
+class PeopleScreen extends StatelessWidget {
   const PeopleScreen({super.key});
 
   @override
-  State<PeopleScreen> createState() => _PeopleScreenState();
-}
-
-class _PeopleScreenState extends State<PeopleScreen> {
-  final PeopleCubit _cubit = PeopleCubit(PeopleInitialState());
-
-  _getPeople() async {
-    _cubit.getPeople(1);
-  }
-
-  @override
-  void initState() {
-    _getPeople();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocProvider(
-        create: (context) => _cubit,
-        child: BlocConsumer(
-          bloc: _cubit,
+    return BlocProvider(
+      create: (context) => sl<PeopleCubit>()..loadPeople(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('PEOPLE'),
+          elevation: 2,
+        ),
+        body: BlocBuilder<PeopleCubit, PeopleState>(
           builder: (context, state) {
-            if(state is PeopleLoading){
-              return Center(child: CircularProgressIndicator.adaptive(),);
-            }else if (state is PeopleSuccess){
-              return _buildUI(context, state.response);
-            }else if (state is PeopleFailure){
-              return Center(child: Text(state.errorMessage),);
-            }else {
-              return SizedBox();
+            if (state is PeopleLoadingState) {
+              return const Center(
+                child: CircularProgressIndicator.adaptive(),
+              );
+            } else if (state is PeopleLoadedState) {
+              return _buildPeopleGrid(context, state);
+            } else if (state is PeopleErrorState) {
+              return _buildErrorWidget(context, state.message);
             }
-          },
-          listener: (context, state) {
-            if (state is PeopleFailure){
-              Scaffold.of(context).showBottomSheet((context){
-                return SizedBox();
-              });
-            }
+            return const SizedBox.shrink();
           },
         ),
       ),
     );
   }
 
-  _buildUI(context, List<Result> people) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Padding(
-          padding: EdgeInsetsGeometry.all(9),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 50),
-              Text('PEOPLE', style: TextStyle(fontSize: 20)),
-              SizedBox(height: 20),
-              SizedBox(
-                height: MediaQuery.of(context).size.height / 1.25,
-                width: double.infinity,
-                child: ListView.builder(
-                  itemCount: (people.length / 2).toInt(),
-                  scrollDirection: Axis.vertical,
-                  itemBuilder: (context, index) {
-                    final firstIndex = index * 2;
-                    final secondIndex = index * 2 + 1;
-                    return Padding(
-                      padding: EdgeInsetsGeometry.all(10),
-                      child: SizedBox(
-                        height: 240,
-                        width: 200,
-                        child: Row(
-                          children: [
-                            PeopleCard(
-                              onClick: (index) {},
-                              index: firstIndex,
-                              print: () {},
-                              imageUrl:
-                                  '${PeopleService.imageBaseUrl}${people[firstIndex].profilePath}',
-                              actorName: people[firstIndex].name ?? 'No Name',
-                            ),
-                            SizedBox(width: 4),
-                            PeopleCard(
-                              onClick: (index) {},
-                              index: secondIndex,
-                              print: () {},
-                              imageUrl:
-                                  '${PeopleService.imageBaseUrl}${people[secondIndex].profilePath}',
-                              actorName: people[secondIndex].name ?? 'No Name',
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+  Widget _buildPeopleGrid(BuildContext context, PeopleLoadedState state) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: state.people.length,
+      itemBuilder: (context, index) {
+        final person = state.people[index];
+        return PeopleCard(
+          imageUrl: person.profilePath != null
+              ? '${ApiConfig.imageBaseUrl}${person.profilePath}'
+              : '',
+          actorName: person.name,
+          onClick: (index) {
+            // Handle click
+          },
+          print: () {
+            // Handle print
+          },
+          index: index,
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 60,
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            'Error',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<PeopleCubit>().loadPeople();
+            },
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
